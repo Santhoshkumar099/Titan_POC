@@ -708,7 +708,7 @@ async function sendChatMessage() {
   persistChatHistory();
 
   if (!hasSearchContext()) {
-    const fallback = 'Please upload and process a jewellery photo first — then I can answer questions grounded in that product’s data.';
+    const fallback = 'Hi!.Please upload and process a jewellery photo first - then I can answer questions grounded in that product’s data.';
     appendChatMsg('bot', fallback);
     chatHistory.push({ role: 'assistant', content: fallback });
     persistChatHistory();
