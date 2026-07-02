@@ -22,9 +22,13 @@ _ENDPOINT = "{base}/ai/v1/text/generation"
 _SYSTEM = (
     "You are a senior retail analytics advisor for Tanishq, India's leading jewellery brand, "
     "chatting with a shop owner who just ran a visual search on a jewellery photo. "
-    "Answer ONLY using the query image details and the 5 visually similar products' data given "
-    "in the conversation context below — regions, peak months, sales figures, ratings, stock, "
-    "price, and tags. Ground every claim in those numbers when possible. "
+    "Answer ONLY using the query image details, the 5 visually similar products' data, and the "
+    "AI Recommendation summary given in the conversation context below — regions, peak months, "
+    "sales figures, ratings, stock, price, and tags. Ground every claim in those numbers when possible. "
+    "If the shop owner asks how you arrived at a claim in the AI Recommendation (e.g. 'how can you say "
+    "this', 'what evidence', 'why'), point to the specific numbers behind it — the peak region/month, "
+    "the sales_3m/6m/1y figures, ratings, or stock/lead-time values from the data — don't just repeat "
+    "the claim. "
     "If something truly cannot be inferred from the given data, say so plainly, then still offer "
     "a reasoned, practical suggestion based on general retail experience. "
     "Answer conversationally in plain sentences — no markdown, no asterisks, no bullet symbols, "
@@ -69,6 +73,7 @@ def _fmt_product(product: dict, rank: int) -> str:
 def _build_prompt(
     query_attrs: dict,
     products: list[dict],
+    recommendation: str,
     history: list[dict],
     message: str,
 ) -> str:
@@ -86,6 +91,9 @@ def _build_prompt(
     lines += ["", "Top 5 visually similar products (rank 1 is the closest match):"]
     for i, p in enumerate(products[:5], start=1):
         lines.append(_fmt_product(trim(p), i))
+
+    if recommendation and recommendation.strip():
+        lines += ["", "AI Recommendation already shown to the shop owner:", recommendation.strip()]
 
     if history:
         lines += ["", "Conversation so far:"]
@@ -112,11 +120,17 @@ def _extract_text(data: dict) -> str:
     return ""
 
 
-def _call_sync(query_attrs: dict, products: list[dict], history: list[dict], message: str) -> str:
+def _call_sync(
+    query_attrs: dict,
+    products: list[dict],
+    recommendation: str,
+    history: list[dict],
+    message: str,
+) -> str:
     if not config.DOMO_API_KEY:
         return "Chat unavailable: DOMO_API_KEY not set in .env"
 
-    prompt = _build_prompt(query_attrs or {}, products or [], history or [], message)
+    prompt = _build_prompt(query_attrs or {}, products or [], recommendation or "", history or [], message)
 
     url = _ENDPOINT.format(base=config.DOMO_BASE_URL.rstrip("/"))
     headers = {
@@ -154,6 +168,7 @@ def _call_sync(query_attrs: dict, products: list[dict], history: list[dict], mes
 async def generate_chat_reply(
     query_attrs: dict,
     products: list[dict],
+    recommendation: str,
     history: list[dict],
     message: str,
 ) -> str:
@@ -161,7 +176,7 @@ async def generate_chat_reply(
     loop = asyncio.get_running_loop()
     try:
         return await loop.run_in_executor(
-            _executor, _call_sync, query_attrs, products, history, message
+            _executor, _call_sync, query_attrs, products, recommendation, history, message
         )
     except Exception as exc:
         print(f"[Chatbot] unexpected error: {exc}")

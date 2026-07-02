@@ -73,7 +73,7 @@ async def api_search(
         raise HTTPException(400, "Empty file")
 
     try:
-        results, gemini_attrs = await engine.search(
+        results, gemini_attrs, recommendation = await engine.search(
             image_bytes=data,
             top_candidates=top_candidates,
             top_final=top_final,
@@ -86,6 +86,7 @@ async def api_search(
         "count": len(results),
         "gemini_attrs": gemini_attrs,
         "results": results,
+        "recommendation": recommendation,
     }
 
 
@@ -99,6 +100,7 @@ class ChatRequest(BaseModel):
     history: list[ChatMessage] = []
     query_attrs: dict = {}
     products: list[dict] = []
+    recommendation: str = ""
 
 
 @app.post("/api/chat")
@@ -109,6 +111,7 @@ async def api_chat(req: ChatRequest):
     reply = await chatbot.generate_chat_reply(
         query_attrs=req.query_attrs,
         products=req.products,
+        recommendation=req.recommendation,
         history=[m.model_dump() for m in req.history],
         message=req.message,
     )
