@@ -1,0 +1,14 @@
+venv/
+react-dashboard/node_modules/
+react-dashboard/.vite/
+pipeline/
+Tanishq Jewells/
+.git/
+*.md
+*.xlsx
+*.png
+Tanishq Logo.png
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+.env

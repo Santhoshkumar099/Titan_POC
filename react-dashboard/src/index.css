@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #FAF7F2;
+    color: #1A1A1A;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Premium scrollbar */
+  ::-webkit-scrollbar        { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track  { background: #F0EBE0; }
+  ::-webkit-scrollbar-thumb  { background: #C8A24A; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #9A6E20; }
+}
+
+@layer components {
+  /* Glass morphism card */
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/60;
+  }
+
+  /* Gold gradient border trick */
+  .gold-border {
+    background:
+      linear-gradient(#fff, #fff) padding-box,
+      linear-gradient(135deg, #C8A24A 0%, #6D213C 100%) border-box;
+    border: 1.5px solid transparent;
+  }
+
+  /* Section heading */
+  .section-label {
+    @apply text-[10px] font-semibold text-gray-400 uppercase tracking-[0.12em];
+  }
+
+  /* Animated count-up value */
+  .kpi-value {
+    @apply text-2xl font-extrabold text-gray-900 tabular-nums leading-none;
+  }
+
+  /* Subtle hover lift */
+  .hover-lift {
+    @apply transition-all duration-200 ease-out;
+  }
+  .hover-lift:hover {
+    transform: translateY(-3px);
+    @apply shadow-card-hover;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  /* Progress bar shimmer */
+  .shimmer-bar {
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+  }
+}

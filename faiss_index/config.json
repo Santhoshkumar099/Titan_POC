@@ -1,0 +1,38 @@
+{
+  "visual_dim": 768,
+  "attr_dim": 18,
+  "w_visual": 1.0,
+  "w_attr": 0.75,
+  "maps": {
+    "category": {
+      "Daily Wear Jewellery": 0,
+      "Daily Wear Rings": 1,
+      "Drop & Danglers": 2,
+      "Gemstone Earrings": 3,
+      "Gemstone Rings": 4,
+      "Gold Bangles": 5,
+      "Gold Chain": 6,
+      "Jhumkas": 7
+    },
+    "metal_type": {
+      "Gold": 0
+    },
+    "material_colour": {
+      "Rose": 0,
+      "Yellow": 1
+    },
+    "gender": {
+      "Kids": 0,
+      "Women": 1
+    },
+    "occasion": {
+      "Bestsellers": 0,
+      "Casual": 1,
+      "Modern": 2
+    },
+    "jewellery_type": {
+      "Gold Jewellery": 0,
+      "Jewellery with Gemstones": 1
+    }
+  }
+}

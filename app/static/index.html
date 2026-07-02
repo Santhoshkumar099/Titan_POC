@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Jewel Lens — Tanishq Visual Search</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=Josefin+Sans:wght@100;200;300&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,sans-serif;background:#fff;color:#1a1a1a}
+
+  .header{background:#6B1A2A;padding:0 32px;height:58px;display:flex;align-items:center;justify-content:space-between}
+  .logo-wrap{display:flex;align-items:center;gap:10px}
+  .header-sub{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:.8px}
+
+  .hero{padding:20px 32px 16px;border-bottom:1px solid #F0E8EA}
+  .hero h1{font-size:20px;font-weight:400;color:#6B1A2A;margin-bottom:3px}
+  .hero p{font-size:12px;color:#aaa;font-style:italic}
+
+  .page{max-width:1140px;margin:0 auto;padding:22px 32px 48px}
+
+  /* 3-COLUMN ROW */
+  .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid #E8DDE0;border-radius:12px;overflow:hidden;background:#FDFBFB;margin-bottom:28px}
+  .col{padding:20px 22px}
+  .col+.col{border-left:1px solid #EDE5E7}
+  .col-title{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#aaa;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+  .col-title::before{content:'';display:inline-block;width:2px;height:10px;background:#6B1A2A;border-radius:2px}
+
+  /* COL 1 — upload */
+  .file-pick{position:relative;display:inline-block;margin-bottom:10px}
+  .file-pick input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+  .pick-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 18px;border:1px solid #6B1A2A;border-radius:20px;font-size:12px;color:#6B1A2A;cursor:pointer;background:#fff;user-select:none;letter-spacing:.2px}
+  .pick-btn:hover{background:#F8F1F2}
+  .pick-btn svg{width:13px;height:13px;stroke:#6B1A2A;fill:none;stroke-width:2}
+  .fname{display:block;font-size:11px;color:#bbb;margin-bottom:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  .fname.chosen{color:#555}
+  .proc-btn{width:100%;padding:10px;background:#6B1A2A;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer;transition:background .15s}
+  .proc-btn:hover:not(:disabled){background:#842235}
+  .proc-btn:disabled{opacity:.38;cursor:not-allowed}
+  .proc-status{font-size:11px;color:#aaa;margin-top:8px;min-height:15px}
+
+  /* COL 2 — query image */
+  .img-frame{width:100%;aspect-ratio:1;border:1px solid #E8DDE0;border-radius:10px;background:#F5F0F1;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .img-frame img{width:100%;height:100%;object-fit:contain;display:block}
+  .img-ph{text-align:center}
+  .img-ph svg{width:28px;height:28px;stroke:#D8C8CB;fill:none;stroke-width:1.4;display:block;margin:0 auto 6px}
+  .img-ph span{font-size:11px;color:#ccc}
+
+  /* ── COL 3 — LIVE ATTRIBUTE STREAM ─────────────────────────────── */
+  .attrs-list{display:flex;flex-direction:column;gap:6px}
+
+  /* idle / error placeholder */
+  .attrs-empty{font-size:11px;color:#ccc;font-style:italic;margin-top:4px}
+   
+  .user-box {
+  border: 1px solid #ccc;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background-color: #f5f5f5;
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+}
+  /* single-row scanning widget */
+  .scan-widget{display:flex;flex-direction:column;gap:9px;padding:10px 12px;background:#ffffff00;border:1px solid #ffffff00;border-radius:9px}
+  .scan-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#C8902A;display:flex;align-items:center;gap:6px}
+  .scan-spinner{width:8px;height:8px;border:1.5px solid #ffffff;border-top-color:#C8902A;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .scan-text-row{height:18px;overflow:hidden;position:relative}
+  .scan-step-text{font-size:11px;font-family:'Courier New',monospace;color:#5A3010;font-weight:600;position:absolute;white-space:nowrap}
+  .scan-step-text.entering{animation:step-in .28s ease forwards}
+  .scan-step-text.leaving {animation:step-out .22s ease forwards}
+  @keyframes step-in {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes step-out{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-10px)}}
+
+  /* progress bar */
+  .scan-bar-wrap{height:3px;background:#F0E4DC;border-radius:2px;overflow:hidden}
+  .scan-bar-fill{height:100%;width:0%;border-radius:2px;background:linear-gradient(to right,#6B1A2A,#C8902A);transition:width .42s ease}
+  /* shimmer on the bar */
+  .scan-bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.5) 50%,transparent 100%);animation:shimmer 1.4s infinite;width:60px}
+  .scan-bar-wrap{position:relative}
+
+  @keyframes shimmer{0%{left:-60px}100%{left:100%}}
+
+  /* final revealed attr rows (slide in from left) */
+  .attr-row{display:flex;align-items:baseline;gap:6px;padding:6px 10px;background:#fff;border:1px solid #EBD9DC;border-radius:7px;opacity:0;transform:translateX(-10px);animation:attr-slide .35s ease forwards}
+  @keyframes attr-slide{to{opacity:1;transform:translateX(0)}}
+  .attr-k{font-size:11px;color:#6B1A2A;font-weight:600;text-transform:capitalize;white-space:nowrap;min-width:90px}
+  .attr-sep{color:#D0B0B6;font-size:10px}
+  .attr-v{font-size:11px;color:#555;line-height:1.4}
+
+  /* RESULTS */
+  .results-hd{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+  .results-hd h2{font-size:14px;font-weight:500;color:#1a1a1a}
+  .results-hd small{font-size:11px;color:#bbb}
+  .section-divider{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .section-divider hr{flex:1;border:none;border-top:1px solid #F0E8EA}
+  .section-divider span{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#ccc}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:14px}
+  .card{border:1px solid #EEEAE8;border-radius:10px;overflow:hidden;background:#fff;transition:border-color .15s,box-shadow .15s;cursor:pointer}
+  .card:hover{border-color:#C9A8AF;box-shadow:0 4px 20px rgba(107,26,42,.12)}
+
+  /* ── CARD IMAGE + GOLD HOVER OVERLAY ─────────────────────────────── */
+  .card-img{aspect-ratio:1;background:#F9F6F6;position:relative;overflow:hidden}
+  .card-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .28s}
+  .card:hover .card-img img{transform:scale(1.05)}
+  .rank-badge{position:absolute;top:8px;left:8px;background:#6B1A2A;color:#fff;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;z-index:2}
+  .score-badge{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92);color:#9A7200;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;border:1px solid #EDE0BC;z-index:2}
+
+  /* Gold ambient hover overlay */
+  .hover-overlay{
+    position:absolute;inset:0;
+    background:linear-gradient(
+      to top,
+      rgba(120,72,5,.88) 0%,
+      rgba(180,120,15,.72) 45%,
+      rgba(212,175,55,.22) 100%
+    );
+    backdrop-filter:blur(1px);
+    display:flex;flex-direction:column;justify-content:flex-end;
+    padding:11px 12px 12px;
+    opacity:0;transform:translateY(8px);
+    transition:opacity .24s ease,transform .24s ease;
+    z-index:3
+  }
+  .card:hover .hover-overlay{opacity:1;transform:translateY(0)}
+
+  .hov-title{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,220,140,.65);margin-bottom:7px}
+  .hov-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+  .hov-label{font-size:10px;color:rgba(255,230,180,.70);letter-spacing:.1px}
+  .hov-val{font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}
+  .hov-val.price{color:#FFE066;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .hov-val.green{color:#AAFAAA;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .hov-val.low{color:#FFCF88}
+  .hov-divider{border:none;border-top:1px solid rgba(255,200,100,.22);margin:5px 0}
+
+  .card-body{padding:10px 12px 12px}
+  .card-name{font-size:12px;color:#1a1a1a;line-height:1.4;margin-bottom:4px;min-height:32px;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .card-meta{font-size:11px;color:#bbb;margin-bottom:5px}
+  .scores{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px}
+  .stag{font-size:10px;padding:2px 7px;border-radius:12px;background:#F9F5F6;border:1px solid #EADCE0;color:#8A4455}
+  .stag.gold{background:#FDFBF0;border-color:#E8DCAA;color:#9A7200}
+  .view-link{font-size:11px;color:#6B1A2A;text-decoration:none}
+  .view-link:hover{text-decoration:underline}
+
+  .empty{text-align:center;padding:32px 24px}
+  .empty svg{width:32px;height:32px;stroke:#DDD;fill:none;stroke-width:1.2;display:block;margin:0 auto 10px}
+  .empty p{font-size:12px;color:#ccc;line-height:1.7}
+
+  /* ── CHATBOT WIDGET ───────────────────────────────────────────────── */
+  .chat-fab{position:fixed;bottom:26px;right:26px;width:56px;height:56px;border-radius:50%;
+    background:linear-gradient(135deg,#6B1A2A,#9A3048);box-shadow:0 6px 20px rgba(107,26,42,.35);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1000;border:none;
+    transition:transform .18s ease}
+  .chat-fab:hover{transform:scale(1.06)}
+  .chat-fab svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2}
+  .chat-fab .fab-dot{position:absolute;top:6px;right:6px;width:9px;height:9px;background:#FFD700;
+    border-radius:50%;border:2px solid #fff}
+
+  .chat-panel{position:fixed;bottom:96px;right:26px;width:360px;max-width:calc(100vw - 40px);
+    height:480px;max-height:calc(100vh - 140px);background:#fff;border-radius:16px;
+    box-shadow:0 12px 40px rgba(0,0,0,.22);display:flex;flex-direction:column;overflow:hidden;
+    z-index:1000;opacity:0;transform:translateY(16px) scale(.98);pointer-events:none;
+    transition:opacity .2s ease,transform .2s ease}
+  .chat-panel.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+
+  .chat-hd{background:linear-gradient(90deg,#6B1A2A,#9A3048);padding:14px 16px;
+    display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .chat-hd-title{display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;font-weight:600;letter-spacing:.3px}
+  .chat-hd-title svg{width:16px;height:16px;stroke:#FFD966;fill:none;stroke-width:2}
+  .chat-close{background:none;border:none;color:rgba(255,255,255,.8);font-size:20px;cursor:pointer;line-height:1;padding:2px 4px}
+  .chat-close:hover{color:#fff}
+
+  .chat-body{flex:1;overflow-y:auto;padding:14px 14px 8px;display:flex;flex-direction:column;gap:10px;background:#FBF8F8}
+  .chat-msg{max-width:82%;font-size:12.5px;line-height:1.55;padding:9px 12px;border-radius:12px;white-space:pre-wrap}
+  .chat-msg.bot{align-self:flex-start;background:#fff;border:1px solid #EEE1E3;color:#333;border-bottom-left-radius:3px}
+  .chat-msg.user{align-self:flex-end;background:#6B1A2A;color:#fff;border-bottom-right-radius:3px}
+  .chat-msg.typing{align-self:flex-start;background:#fff;border:1px solid #EEE1E3;display:flex;gap:4px;padding:11px 14px}
+  .chat-dot{width:6px;height:6px;border-radius:50%;background:#C9A8AF;animation:chat-bounce 1.1s infinite}
+  .chat-dot:nth-child(2){animation-delay:.15s}.chat-dot:nth-child(3){animation-delay:.3s}
+  @keyframes chat-bounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+
+  .chat-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 10px;flex-shrink:0}
+  .chat-chip{font-size:10.5px;padding:5px 10px;border-radius:14px;border:1px solid #E8DDE0;background:#fff;color:#6B1A2A;cursor:pointer;white-space:nowrap}
+  .chat-chip:hover{background:#F8F1F2}
+
+  .chat-input-row{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #F0E8EA;flex-shrink:0;background:#fff}
+  .chat-input-row input{flex:1;border:1px solid #E8DDE0;border-radius:20px;padding:9px 14px;font-size:12px;outline:none}
+  .chat-input-row input:focus{border-color:#C9A8AF}
+  .chat-send-btn{width:36px;height:36px;border-radius:50%;background:#6B1A2A;border:none;color:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+  .chat-send-btn:disabled{opacity:.4;cursor:not-allowed}
+  .chat-send-btn svg{width:15px;height:15px;fill:#fff}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-wrap" style="display:flex;align-items:center;gap:14px">
+    <div style="background:#fff;border-radius:5px;padding:3px 8px;display:flex;align-items:center">
+      <img src="/static/tanishq_logo.png" alt="Tanishq" style="height:32px;object-fit:contain;display:block"/>
+    </div>
+    <div style="height:34px;width:1px;background:rgba(255,255,255,.22)"></div>
+    <div style="display:flex;flex-direction:column;justify-content:center;gap:4px">
+      <span style="
+        font-family:'Playfair Display',serif;
+        font-size:20px;
+        font-weight:700;
+        font-style:italic;
+        letter-spacing:1.5px;
+        line-height:1;
+        color:#FFD700;
+        text-shadow:0 0 12px rgba(255,210,0,.6), 0 2px 4px rgba(0,0,0,.4);
+      ">Jewelara</span>
+      <span style="
+        font-family:'Josefin Sans',sans-serif;
+        font-size:8px;
+        font-weight:300;
+        letter-spacing:6px;
+        color:#ffffff;
+        text-shadow:0 0 8px rgba(255,255,255,.7);
+        text-transform:uppercase;
+        line-height:1;
+      ">Vision</span>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px">
+    <a id="dashLink" href="/dashboard/" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:linear-gradient(135deg,#C8A24A,#9A6E20);border-radius:8px;color:#fff;font-size:11px;font-weight:600;letter-spacing:.6px;text-decoration:none;border:none;cursor:pointer;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <span class="header-sub user-box">User</span>
+  </div>
+</div>
+
+<div class="hero">
+  <h1>Jewel Lens — Find jewellery that speaks to you</h1>
+  <p>Upload a photo — we'll surface the pieces that match its beauty</p>
+</div>
+
+<div class="page">
+
+  <div class="three-col">
+
+    <!-- COL 1: Upload -->
+    <div class="col">
+      <div class="col-title">Upload image</div>
+      <div class="file-pick">
+        <input type="file" id="file" accept="image/*"/>
+        <span class="pick-btn">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          Choose image
+        </span>
+      </div>
+      <span class="fname" id="fname">No file selected</span>
+      <button class="proc-btn" id="procBtn" disabled>Process</button>
+      <div class="proc-status" id="procStatus"></div>
+    </div>
+
+    <!-- COL 2: Query image -->
+    <div class="col">
+      <div class="col-title">Query image</div>
+      <div class="img-frame" id="imgFrame">
+        <div class="img-ph">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <span>Preview appears here</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 3: Live attribute stream -->
+    <div class="col">
+      <div class="col-title">Identified attributes</div>
+      <div id="attrsList" class="attrs-list">
+        <span class="attrs-empty">Attributes appear after processing</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RESULTS -->
+  <div id="resultsSection" style="display:none">
+
+    <div class="section-divider" style="margin-top:28px"><hr/><span>Matched pieces</span><hr/></div>
+    <div class="results-hd">
+      <h2>Similar pieces</h2>
+      <small id="resultCount"></small>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="empty" id="emptyState">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><circle cx="11" cy="11" r="3"/></svg>
+    <p>Upload a jewellery photo to discover<br/>visually similar pieces from our collection</p>
+  </div>
+
+</div>
+
+<!-- CHATBOT WIDGET -->
+<button class="chat-fab" id="chatFab" aria-label="Open Jewel Assistant">
+  <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+  <span class="fab-dot"></span>
+</button>
+
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-hd">
+    <div class="chat-hd-title">
+      <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      Jewel Assistant
+    </div>
+    <button class="chat-close" id="chatClose" aria-label="Close">×</button>
+  </div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-suggestions" id="chatSuggestions"></div>
+  <div class="chat-input-row">
+    <input type="text" id="chatInput" placeholder="Ask about this product…" autocomplete="off"/>
+    <button class="chat-send-btn" id="chatSend" aria-label="Send">
+      <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+// ── DOM refs ─────────────────────────────────────────────────────────
+const fileEl         = document.getElementById('file');
+const fnEl           = document.getElementById('fname');
+const imgFrame       = document.getElementById('imgFrame');
+const procBtn        = document.getElementById('procBtn');
+const procStatus     = document.getElementById('procStatus');
+const attrsList      = document.getElementById('attrsList');
+const resultsSection = document.getElementById('resultsSection');
+const resultCount    = document.getElementById('resultCount');
+const gridEl         = document.getElementById('grid');
+const emptyState     = document.getElementById('emptyState');
+
+const phHTML = `<div class="img-ph">
+  <svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#D8C8CB;fill:none;stroke-width:1.4;display:block;margin:0 auto 6px">
+    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+  </svg>
+  <span style="font-size:11px;color:#ccc">Preview appears here</span>
+</div>`;
+
+// ── Attribute scanning steps ─────────────────────────────────────────
+const SCAN_STEPS = [
+  'AI searching attributes…',
+  'Identifying category…',
+  'Identifying material colour…',
+  'Identifying gender…',
+  'Identifying occasion…',
+  'Identifying jewellery type…',
+];
+
+let scanTimer = null;
+let scanIndex = 0;
+
+function buildWidget() {
+  attrsList.innerHTML = `
+    <div class="scan-widget">
+      
+      <div class="scan-text-row" id="scanTextRow">
+        <span class="scan-step-text entering" id="scanText">${SCAN_STEPS[0]}</span>
+      </div>
+      <div class="scan-bar-wrap">
+        <div class="scan-bar-fill" id="scanBar"></div>
+      </div>
+    </div>`;
+  setBarWidth(0);
+}
+
+function setBarWidth(idx) {
+  const bar = document.getElementById('scanBar');
+  if (bar) bar.style.width = Math.min(((idx + 1) / SCAN_STEPS.length) * 92, 92) + '%';
+}
+
+function swapText(newLabel) {
+  const row  = document.getElementById('scanTextRow');
+  const old  = document.getElementById('scanText');
+  if (!row || !old) return;
+
+  // Slide old text up
+  old.classList.remove('entering');
+  old.classList.add('leaving');
+
+  // After leaving animation, insert new text sliding in from below
+  setTimeout(() => {
+    old.remove();
+    const el = document.createElement('span');
+    el.id = 'scanText';
+    el.className = 'scan-step-text entering';
+    el.textContent = newLabel;
+    row.appendChild(el);
+  }, 220);
+}
+
+function startScan() {
+  scanIndex = 0;
+  buildWidget();
+
+  scanTimer = setInterval(() => {
+    scanIndex++;
+    if (scanIndex >= SCAN_STEPS.length) { clearInterval(scanTimer); return; }
+    swapText(SCAN_STEPS[scanIndex]);
+    setBarWidth(scanIndex);
+  }, 500);
+}
+
+function stopScan() {
+  clearInterval(scanTimer);
+  // Fill bar to 100 %
+  const bar = document.getElementById('scanBar');
+  if (bar) bar.style.width = '100%';
+}
+
+// ── Reveal attrs one-by-one after response ───────────────────────────
+function revealAttrs(a) {
+  stopScan();
+  attrsList.innerHTML = '';
+
+  const entries = Object.entries(a).filter(([, v]) => v && String(v).trim());
+  if (!entries.length) {
+    attrsList.innerHTML = '<span class="attrs-empty">No attributes detected</span>';
+    return;
+  }
+
+  entries.forEach(([k, v], i) => {
+    setTimeout(() => {
+      const row = document.createElement('div');
+      row.className = 'attr-row';
+      row.style.animationDelay = '0ms'; // already staggered via setTimeout
+      row.innerHTML = `<span class="attr-k">${k.replace(/_/g, ' ')}</span>
+                       <span class="attr-sep">·</span>
+                       <span class="attr-v">${v}</span>`;
+      attrsList.appendChild(row);
+    }, i * 260);
+  });
+}
+
+// ── File pick ────────────────────────────────────────────────────────
+fileEl.addEventListener('change', () => {
+  const f = fileEl.files[0];
+  procBtn.disabled = !f;
+  procStatus.textContent = '';
+  if (!f) {
+    fnEl.textContent = 'No file selected';
+    fnEl.className = 'fname';
+    imgFrame.innerHTML = phHTML;
+    attrsList.innerHTML = '<span class="attrs-empty">Attributes appear after processing</span>';
+    sessionStorage.removeItem('jv_image_src');
+    sessionStorage.removeItem('jv_fname');
+    return;
+  }
+  const n = f.name;
+  fnEl.textContent = n.length > 30 ? n.slice(0, 28) + '…' : n;
+  fnEl.className = 'fname chosen';
+  // FileReader gives base64 that survives page navigation (unlike createObjectURL)
+  const reader = new FileReader();
+  reader.onload = e => {
+    const src = e.target.result;
+    imgFrame.innerHTML = `<img src="${src}" alt="query"/>`;
+    sessionStorage.setItem('jv_image_src', src);
+    sessionStorage.setItem('jv_fname', n);
+  };
+  reader.readAsDataURL(f);
+  attrsList.innerHTML = '<span class="attrs-empty">Attributes appear after processing</span>';
+});
+
+// ── Process click ────────────────────────────────────────────────────
+procBtn.addEventListener('click', async () => {
+  const f = fileEl.files[0]; if (!f) return;
+  procBtn.disabled = true;
+  procStatus.textContent = '';
+  resultsSection.style.display = 'none';
+  emptyState.style.display = 'none';
+
+  startScan();
+
+  const fd = new FormData(); fd.append('file', f);
+  try {
+    const res = await fetch('/api/search', { method: 'POST', body: fd });
+    if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+    const data = await res.json();
+
+    revealAttrs(data.gemini_attrs || {});
+    renderResults(data.results || [], data.count || 0);
+    // Persist so the user can navigate to the dashboard and return without losing results
+    sessionStorage.setItem('jv_attrs',   JSON.stringify(data.gemini_attrs || {}));
+    sessionStorage.setItem('jv_results', JSON.stringify(data.results || []));
+    sessionStorage.setItem('jv_count',   String(data.count || 0));
+  } catch (e) {
+    stopScan();
+    attrsList.innerHTML = '<span class="attrs-empty">Detection failed</span>';
+    procStatus.textContent = 'Error: ' + e.message;
+    emptyState.style.display = '';
+  } finally {
+    procBtn.disabled = false;
+  }
+});
+
+function formatPrice(n) {
+  const num = Number(n);
+  if (!n || isNaN(num)) return '—';
+  return '₹' + num.toLocaleString('en-IN');
+}
+
+function launchYear(dateStr) {
+  if (!dateStr) return '—';
+  return String(dateStr).split('-')[0].split(' ')[0];
+}
+
+// ── Render results ───────────────────────────────────────────────────
+function renderResults(results, count) {
+  if (!results.length) { emptyState.style.display = ''; return; }
+  emptyState.style.display = 'none';
+  resultCount.textContent = count + ' results';
+  gridEl.innerHTML = '';
+
+  results.forEach((r) => {
+    const meta  = [r.category, r.metal_type, r.material_colour].filter(Boolean).join(' · ');
+    const link  = r.image_url
+      ? `<a class="view-link" href="${r.image_url}" target="_blank" rel="noopener noreferrer">View product →</a>` : '';
+    const attrS = r.attr_match != null
+      ? `<span class="stag gold">attr ${r.attr_match.toFixed(2)}</span>` : '';
+
+    const stock    = Number(r.current_stock);
+    const stockClass = stock > 0 ? 'green' : 'low';
+    const stockLabel = stock > 0 ? stock + ' units' : 'Out of stock';
+    const rating   = r.avg_rating ? parseFloat(r.avg_rating).toFixed(1) + ' ★' : '—';
+    const sales3m  = r.sales_3m   ? Number(r.sales_3m) + ' units' : '—';
+    const simPct   = r.final_score.toFixed(3);
+
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.innerHTML = `
+      <div class="card-img">
+        <img src="${r.image}" loading="lazy" alt="${r.product_name || ''}"/>
+        <span class="rank-badge">#${r.rank}</span>
+        <span class="score-badge">${simPct}</span>
+
+        <div class="hover-overlay">
+          <div class="hov-title">Product info</div>
+          <div class="hov-row">
+            <span class="hov-label">Launch year</span>
+            <span class="hov-val">${launchYear(r.launched_date)}</span>
+          </div>
+          <div class="hov-row">
+            <span class="hov-label">Sales (3 months)</span>
+            <span class="hov-val green">${sales3m}</span>
+          </div>
+          <hr class="hov-divider"/>
+          <div class="hov-row">
+            <span class="hov-label">Price (MRP)</span>
+            <span class="hov-val price">${formatPrice(r.mrp)}</span>
+          </div>
+          <div class="hov-row">
+            <span class="hov-label">Rating</span>
+            <span class="hov-val">${rating}</span>
+          </div>
+          <div class="hov-row">
+            <span class="hov-label">In stock</span>
+            <span class="hov-val ${stockClass}">${stockLabel}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="card-name">${r.product_name || ''}</div>
+        ${meta ? `<div class="card-meta">${meta}</div>` : ''}
+        <div class="scores">
+          <span class="stag">visual ${r.visual_sim != null ? r.visual_sim.toFixed(3) : '—'}</span>
+          ${attrS}
+        </div>
+        ${link}
+      </div>`;
+
+    gridEl.appendChild(c);
+  });
+
+  resultsSection.style.display = '';
+}
+
+// ── Session restore — reload previous search after navigating away ────
+(function restoreSession() {
+  const src    = sessionStorage.getItem('jv_image_src');
+  const fname  = sessionStorage.getItem('jv_fname');
+  const attrsJ = sessionStorage.getItem('jv_attrs');
+  const resJ   = sessionStorage.getItem('jv_results');
+  const count  = sessionStorage.getItem('jv_count');
+
+  if (!src) return; // nothing saved yet
+
+  // Restore query image preview
+  imgFrame.innerHTML = `<img src="${src}" alt="query"/>`;
+  if (fname) {
+    fnEl.textContent = fname.length > 30 ? fname.slice(0, 28) + '…' : fname;
+    fnEl.className = 'fname chosen';
+  }
+
+  // Restore identified attributes
+  if (attrsJ) { try { revealAttrs(JSON.parse(attrsJ)); } catch {} }
+
+  // Restore result grid
+  if (resJ) {
+    try { renderResults(JSON.parse(resJ), parseInt(count, 10) || 0); } catch {}
+  }
+})();
+
+// Dashboard link: use /dashboard/ in Docker, fall back to localhost:5173 locally
+fetch('/dashboard/').then(r => {
+  if (!r.ok) document.getElementById('dashLink').href = 'http://localhost:5173';
+}).catch(() => {
+  document.getElementById('dashLink').href = 'http://localhost:5173';
+});
+
+// ── Chatbot widget ───────────────────────────────────────────────────
+const chatFab         = document.getElementById('chatFab');
+const chatPanel       = document.getElementById('chatPanel');
+const chatCloseBtn    = document.getElementById('chatClose');
+const chatBody        = document.getElementById('chatBody');
+const chatInput       = document.getElementById('chatInput');
+const chatSendBtn     = document.getElementById('chatSend');
+const chatSuggestions = document.getElementById('chatSuggestions');
+
+let chatHistory = [];
+try { chatHistory = JSON.parse(sessionStorage.getItem('jv_chat_history') || '[]'); } catch { chatHistory = []; }
+
+const SUGGESTED_QUESTIONS = [
+  'Where can I sell this best?',
+  'What was the peak sale period?',
+  'How can I increase sales?',
+  'Any improvements you’d suggest?',
+];
+
+function hasSearchContext() {
+  return !!sessionStorage.getItem('jv_results');
+}
+
+function getChatContext() {
+  let products = [];
+  let attrs = {};
+  try { products = JSON.parse(sessionStorage.getItem('jv_results') || '[]'); } catch {}
+  try { attrs = JSON.parse(sessionStorage.getItem('jv_attrs') || '{}'); } catch {}
+  return { products, attrs };
+}
+
+function appendChatMsg(role, text) {
+  const el = document.createElement('div');
+  el.className = 'chat-msg ' + (role === 'user' ? 'user' : 'bot');
+  el.textContent = text;
+  chatBody.appendChild(el);
+  chatBody.scrollTop = chatBody.scrollHeight;
+  return el;
+}
+
+function showTyping() {
+  const el = document.createElement('div');
+  el.className = 'chat-msg typing';
+  el.id = 'chatTyping';
+  el.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>';
+  chatBody.appendChild(el);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function hideTyping() {
+  const el = document.getElementById('chatTyping');
+  if (el) el.remove();
+}
+
+function renderSuggestions() {
+  chatSuggestions.innerHTML = '';
+  if (chatHistory.length > 0) return; // only show before the first exchange
+  SUGGESTED_QUESTIONS.forEach(q => {
+    const chip = document.createElement('span');
+    chip.className = 'chat-chip';
+    chip.textContent = q;
+    chip.addEventListener('click', () => { chatInput.value = q; sendChatMessage(); });
+    chatSuggestions.appendChild(chip);
+  });
+}
+
+function persistChatHistory() {
+  sessionStorage.setItem('jv_chat_history', JSON.stringify(chatHistory));
+}
+
+function initChatBody() {
+  chatBody.innerHTML = '';
+  if (chatHistory.length) {
+    chatHistory.forEach(m => appendChatMsg(m.role, m.content));
+  } else {
+    appendChatMsg('bot', hasSearchContext()
+      ? 'Hi! Ask me anything about the product you searched — where to sell it, the best season, or how to boost sales.'
+      : 'Hi! Upload and process a jewellery photo first - then I can answer questions about where to sell it, peak sale periods, and how to improve sales.');
+  }
+  renderSuggestions();
+}
+
+async function sendChatMessage() {
+  const msg = chatInput.value.trim();
+  if (!msg) return;
+  chatInput.value = '';
+  chatSendBtn.disabled = true;
+
+  appendChatMsg('user', msg);
+  chatHistory.push({ role: 'user', content: msg });
+  renderSuggestions();
+  persistChatHistory();
+
+  if (!hasSearchContext()) {
+    const fallback = 'Please upload and process a jewellery photo first — then I can answer questions grounded in that product’s data.';
+    appendChatMsg('bot', fallback);
+    chatHistory.push({ role: 'assistant', content: fallback });
+    persistChatHistory();
+    chatSendBtn.disabled = false;
+    return;
+  }
+
+  showTyping();
+  const { products, attrs } = getChatContext();
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: msg,
+        history: chatHistory.slice(0, -1),
+        query_attrs: attrs,
+        products: products,
+      }),
+    });
+    hideTyping();
+    if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+    const data = await res.json();
+    appendChatMsg('bot', data.reply || 'Sorry, I could not find an answer.');
+    chatHistory.push({ role: 'assistant', content: data.reply || '' });
+  } catch (e) {
+    hideTyping();
+    appendChatMsg('bot', 'Sorry, something went wrong: ' + e.message);
+    chatHistory.push({ role: 'assistant', content: 'Error: ' + e.message });
+  } finally {
+    persistChatHistory();
+    chatSendBtn.disabled = false;
+  }
+}
+
+chatFab.addEventListener('click', () => {
+  const isOpen = chatPanel.classList.toggle('open');
+  if (isOpen && !chatBody.childElementCount) initChatBody();
+});
+chatCloseBtn.addEventListener('click', () => chatPanel.classList.remove('open'));
+chatSendBtn.addEventListener('click', sendChatMessage);
+chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendChatMessage(); });
+</script>
+</body>
+</html>

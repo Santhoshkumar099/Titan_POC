@@ -1,0 +1,24 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment — contains secret API keys, never commit
+.env
+
+# Node
+react-dashboard/node_modules/
+react-dashboard/dist/
+react-dashboard/.vite/
+
+# Docker exports
+*.tar
+*.tar.gz
+
+# Raw source images (large, not needed — normalized_output is used instead)
+Tanishq Jewells/
+
+# Windows
+Thumbs.db
+desktop.ini
